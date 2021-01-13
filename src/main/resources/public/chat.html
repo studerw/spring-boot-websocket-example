@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat - Spring Boot WebHooks and StompJS</title>
+  <link type="text/css" rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrapper">
+  <ul>
+    <li>Open multiple browsers or tabs to chat across those.</li>
+    <li>On the Client Side, the nice <a href="https://github.com/stomp-js/stompjs">Stompjs</a> is used (version 5.4).
+    </li>
+    <li>The html/css is heavily based on
+      <a href="https://code.tutsplus.com/tutorials/how-to-create-a-simple-web-based-chat-application--net-5931">
+        Simple Web-Based Chat Application</a>
+    </li>
+  </ul>
+  <div id="menu">
+    <p class="welcome">Welcome, <input title="username" name="username" id="username" type="text" value="Change Me">
+    </p>
+  </div>
+
+  <div id="chatbox"></div>
+
+  <input name="usermsg" type="text" id="usermsg" size="63" title="usermsg"/>
+  <button name="submitmsg" id="submitmsg">Send</button>
+</div>
+
+<!-- It is used for DOM manipulation, not mandatory to use stompjs -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<!-- Include from CDN for better performance, alternatively you can locally copy as well -->
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@5.4.4/bundles/stomp.umd.min.js"></script>
+
+<script type="application/javascript">
+  $(function () {
+    let stompClient;
+
+    const stompConfig = {
+      // Typically login, passcode and vhost
+      // Adjust these for your broker
+      connectHeaders: {
+        login: "guest", passcode: "guest"
+      },
+
+      // Broker URL, should start with ws:// or wss:// - adjust for your broker setup
+      brokerURL: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/websocket`,
+
+      // Keep it off for production, it can be quit verbose
+      // Skip this key to disable
+      debug: function (str) {
+        console.log('STOMP: ' + str);
+      },
+
+      // If disconnected, it will retry after 200ms
+      reconnectDelay: 200,
+
+      // Subscriptions should be done inside onConnect as those need to reinstated when the broker reconnects
+      onConnect: function (frame) {
+        // The return object has a method called `unsubscribe`
+        const subscription = stompClient.subscribe('/topic/chat', function (message) {
+          const payload = JSON.parse(message.body);
+          displayIncomingMessage(payload.user, payload.message);
+        });
+      }
+    };
+
+    // Create an instance
+    stompClient = new StompJs.Client(stompConfig);
+
+    // You can set additional configuration here
+
+    // Attempt to connect
+    stompClient.activate();
+
+    // For the demo, set a random display user name for the chat, just feels nice
+    $("#username").val("User " + Math.round(Math.random() * 100));
+
+    // Set the DOM event handlers must not be inside onConnect - other for each reconnect it will keep getting added
+    $("#submitmsg").click(function () {
+      if (publishMessage($("#username").val(), $("#usermsg").val())) {
+        clearMessageInput();
+      }
+    });
+
+    function clearMessageInput() {
+      $("#usermsg").val("");
+    }
+
+    function publishMessage(user, message) {
+      // trying to publish a message when the broker is not connected will throw an exception
+      if (!stompClient.connected) {
+        alert("Broker disconnected, can't send message.");
+        return false;
+      }
+      if (message.length > 0) {
+        const payLoad = {user: user, message: message};
+
+        // You can additionally pass headers
+        stompClient.publish({destination: '/app/message', body: JSON.stringify(payLoad)});
+      }
+      return true;
+    }
+
+    function displayIncomingMessage(user, message) {
+      const msgDiv = $("<div>").addClass("msgln");
+      msgDiv.html('<span class="user">[' + user + ']: </span><span class="message">' + message + '</span>');
+      $("#chatbox").append(msgDiv);
+    }
+  })
+</script>
+</body>
+</html>
