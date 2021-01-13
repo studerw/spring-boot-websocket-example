@@ -4,7 +4,7 @@ The Chat Html and Javascript.
 
 It requires Java 8. 
 
-![spring-boot-websocket-example](https://github.com/studerw/spring-boot-websocket-example/blob/master/chat_animated.png)
+![spring-boot-websocket-example](https://github.com/studerw/spring-boot-websocket-example/blob/main/chat_animated.gif)
 
 
 ## Building the Project
