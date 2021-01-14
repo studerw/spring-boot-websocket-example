@@ -24,7 +24,7 @@ The following test can be run from the command line:
 
 ## Running the Chat Application
 
-In your browser, open up two tabs, both to [https://localhost:8080/chat.html](https://localhost:8080/chat.html).
+In your browser, open up two tabs, both to [http://localhost:8080/chat.html](https://localhost:8080/chat.html).
 
 From within each tab, send chat messages. You should see the messages appear in both tabs.
 
